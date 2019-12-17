@@ -1,15 +1,12 @@
 
 require("dotenv").config();
-// var keys = require("./key.js");
+var keys = require("./keys.js");
 const moment = require("moment");
 var Spotify = require('node-spotify-api');
-var inquirer = require('inquirer');
 const axios = require('axios');
+const fs = require("fs");
 var params = process.argv.splice(3).join(" ");
-// var spotify = new Spotify({
-//     id: <your spotify client id>,
-//     secret: <your spotify client secret>
-//   });
+ var spotify = new Spotify(keys.spotify)
 
 // =======================APP=RUNNING==================================
 
@@ -25,6 +22,14 @@ function App(command, parameters) {
     
         case "movie-this":    
         getMovie(parameters);
+        break;
+    
+        case "do-what-it-says":    
+        doIt();
+        break;
+    
+        case "spotify-this-song":    
+        getSong(parameters);
         break;
     
         default:
@@ -48,7 +53,6 @@ function getBand(artist) {
      console.log (`${show.venue.city}, ${show.venue.region || show.venue.country} at ${show.venue.name} ${moment(show.datetime).format("LLLL")}`)
      console.log("=================================================================================");
     }
-    
   })
 }
 
@@ -72,16 +76,43 @@ function getMovie(movie) {
   });
 
   function getTomatoes(tomatoes) {
-
+    if ( tomatoes.Source === "Rotten Tomatoes") {
+      console.log("Rotten Tomates Rating: ", tomatoes.Value);
+    }
   }
 }
 
+function doIt() {
+  fs.readFile("random.txt", "utf8", function (error, data) {
+    if (error) throw error; 
 
+    const dataArr = data.split(",");
+    App(dataArr[0], dataArr[1]);
+  })
+}
 
-// inquirer
-//   .prompt([
-//     /* Pass your questions in here */
-//   ])
-//   .then(answers => {
-//     // Use user feedback for... whatever!!
-//   });
+function getSong(song) {
+  spotify
+  .search({ type: 'track', query: song })
+  .then(function(response) {
+    
+    for (let i = 0; i < response.tracks.items.length; i++) {
+      const song = response.tracks.items[i];
+      
+      console.log("Number: ", i+1, "/", response.tracks.items.length);
+      console.log('Artist: ', song.artists.map(getArtistName));
+      console.log("Song Name: ", song.name);
+      console.log("Preview Song: ", song.preview_url);
+      console.log('Album: ', song.album.name);
+      console.log("=================================================");
+    }
+  })
+  .catch(function(err) {
+    console.log(err);
+  });
+
+  function getArtistName(artist ) {
+    console.log(artist.name);
+    
+  }
+}
